@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import mailtm
 import guerrillamail
+import mailnesia
 import db
 
 app = Flask(__name__)
@@ -9,6 +10,7 @@ db.init_db()
 PROVIDERS = {
     "mailtm": mailtm,
     "guerrilla": guerrillamail,
+    "mailnesia": mailnesia,
 }
 
 

@@ -137,6 +137,7 @@
                 style="width:100%;background:#0f1117;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px">
           <option value="mailtm">mail.tm</option>
           <option value="guerrilla">Guerrilla Mail</option>
+          <option value="mailnesia">Mailnesia</option>
         </select>
       </div>
 
@@ -173,8 +174,9 @@
 
 <script>
 const DOMAINS = {
-  mailtm: {{ domains | selectattr('provider','equalto','mailtm') | map(attribute='domain') | list | tojson if domains is defined else '["wshu.net"]' }},
-  guerrilla: {{ domains | selectattr('provider','equalto','guerrilla') | map(attribute='domain') | list | tojson if domains is defined else '[]' }}
+  mailtm:    {{ domains | selectattr('provider','equalto','mailtm')    | map(attribute='domain') | list | tojson if domains is defined else '["wshu.net"]' }},
+  guerrilla: {{ domains | selectattr('provider','equalto','guerrilla') | map(attribute='domain') | list | tojson if domains is defined else '[]' }},
+  mailnesia: {{ domains | selectattr('provider','equalto','mailnesia') | map(attribute='domain') | list | tojson if domains is defined else '["mailnesia.com"]' }}
 };
 
 function updateDomains(){
