@@ -130,24 +130,78 @@
   <div class="modal">
     <h3>Criar novo email</h3>
     <form method="post" action="/create">
+
       <div class="form-group">
-        <label>Endereço (deixe vazio para gerar automaticamente)</label>
-        <input name="address" placeholder="usuario@wshu.net"/>
+        <label>Provider</label>
+        <select name="provider" id="providerSelect" onchange="updateDomains()"
+                style="width:100%;background:#0f1117;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px">
+          <option value="mailtm">mail.tm</option>
+          <option value="guerrilla">Guerrilla Mail</option>
+        </select>
       </div>
+
       <div class="form-group">
-        <label>Senha</label>
-        <input name="password" value="Senha@1234"/>
+        <label>Domínio</label>
+        <select id="domainSelect"
+                style="width:100%;background:#0f1117;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px">
+        </select>
       </div>
+
+      <div class="form-group">
+        <label>Usuário (deixe vazio para gerar automaticamente)</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="userInput" name="address" placeholder="usuario"
+                 style="flex:1;background:#0f1117;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px"
+                 oninput="updatePreview()"/>
+          <span id="domainPreview" style="font-size:13px;color:var(--muted);white-space:nowrap"></span>
+        </div>
+      </div>
+
+      <div class="form-group" id="passwordGroup">
+        <label>Senha <span style="font-size:11px;color:var(--muted)">(apenas mail.tm)</span></label>
+        <input name="password" value="Senha@1234"
+               style="width:100%;background:#0f1117;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px"/>
+      </div>
+
       <div class="actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Criar</button>
+        <button type="submit" class="btn btn-primary" onclick="assembleAddress()">Criar</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-function openModal(){document.getElementById('createModal').classList.add('open')}
+const DOMAINS = {
+  mailtm: {{ domains | selectattr('provider','equalto','mailtm') | map(attribute='domain') | list | tojson if domains is defined else '["wshu.net"]' }},
+  guerrilla: {{ domains | selectattr('provider','equalto','guerrilla') | map(attribute='domain') | list | tojson if domains is defined else '[]' }}
+};
+
+function updateDomains(){
+  const p = document.getElementById('providerSelect').value;
+  const sel = document.getElementById('domainSelect');
+  sel.innerHTML = '';
+  (DOMAINS[p] || []).forEach(d => {
+    const o = document.createElement('option'); o.value = d; o.textContent = '@' + d; sel.appendChild(o);
+  });
+  document.getElementById('passwordGroup').style.display = p === 'mailtm' ? '' : 'none';
+  updatePreview();
+}
+
+function updatePreview(){
+  const domain = document.getElementById('domainSelect').value || '';
+  document.getElementById('domainPreview').textContent = domain ? '@' + domain : '';
+}
+
+function assembleAddress(){
+  const user = document.getElementById('userInput').value.trim();
+  const domain = document.getElementById('domainSelect').value;
+  if(user && domain){
+    document.getElementById('userInput').value = user + '@' + domain;
+  }
+}
+
+function openModal(){document.getElementById('createModal').classList.add('open'); updateDomains();}
 function closeModal(){document.getElementById('createModal').classList.remove('open')}
 document.getElementById('createModal').addEventListener('click',function(e){if(e.target===this)closeModal()})
 
@@ -156,6 +210,8 @@ function copyText(text){
     const el=event.target; el.textContent='Copiado!'; setTimeout(()=>el.textContent='Copiar',1500)
   })
 }
+
+updateDomains();
 </script>
 </body>
 </html>

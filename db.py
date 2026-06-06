@@ -12,10 +12,12 @@ def init_db():
                 address     TEXT UNIQUE NOT NULL,
                 password    TEXT NOT NULL,
                 token       TEXT,
+                provider    TEXT DEFAULT 'mailtm',
                 created_at  TEXT DEFAULT (datetime('now')),
                 label       TEXT DEFAULT '',
                 note        TEXT DEFAULT ''
             );
+
 
             CREATE TABLE IF NOT EXISTS messages (
                 id          TEXT PRIMARY KEY,
@@ -32,6 +34,11 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_messages_seen    ON messages(seen);
             CREATE INDEX IF NOT EXISTS idx_accounts_address ON accounts(address);
         """)
+        # migrate existing DBs without provider column
+        try:
+            conn.execute("ALTER TABLE accounts ADD COLUMN provider TEXT DEFAULT 'mailtm'")
+        except Exception:
+            pass
 
 
 @contextmanager
@@ -50,8 +57,8 @@ def get_conn():
 def save_account(acc: dict):
     with get_conn() as conn:
         conn.execute(
-            "INSERT OR REPLACE INTO accounts (id, address, password, token) VALUES (?,?,?,?)",
-            (acc["id"], acc["address"], acc["password"], acc.get("token", ""))
+            "INSERT OR REPLACE INTO accounts (id, address, password, token, provider) VALUES (?,?,?,?,?)",
+            (acc["id"], acc["address"], acc["password"], acc.get("token", ""), acc.get("provider", "mailtm"))
         )
 
 
