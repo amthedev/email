@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="layout">
+  <div class="main" style="padding:20px">
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Buscar em todos os emails</h2>
+      </div>
+      <div class="panel-body">
+        <form method="get" action="/search" class="form-inline" style="margin-bottom:20px">
+          <input name="q" placeholder="Buscar por assunto, remetente ou conteúdo..." value="{{ q }}"
+                 style="flex:1;min-width:200px"/>
+          <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+
+        {% if q %}
+          {% if results %}
+          <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">{{ results|length }} resultado(s) para "{{ q }}"</div>
+          <div class="search-results">
+            {% for r in results %}
+            <div class="sr-item">
+              <div class="sr-account">📬 {{ r.account_address }}</div>
+              <div class="sr-subject">{{ r.subject or '(sem assunto)' }}</div>
+              <div class="sr-from">De: {{ r.from_addr }} &nbsp;·&nbsp; {{ r.received_at[:16] if r.received_at else '' }}</div>
+              {% if r.body %}
+              <div style="font-size:12px;color:var(--muted);margin-top:4px;white-space:pre-wrap">{{ r.body[:300] }}{% if r.body|length > 300 %}…{% endif %}</div>
+              {% endif %}
+              <div style="margin-top:8px">
+                <a href="/message/{{ r.account_id }}/{{ r.id }}" class="btn btn-secondary" style="font-size:12px;padding:4px 10px">Abrir</a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty">Nenhum resultado para "{{ q }}".</div>
+          {% endif %}
+        {% else %}
+        <div class="empty">Digite algo para buscar em todos os emails salvos.</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

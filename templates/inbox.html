@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="layout">
+
+  <!-- sidebar: lista de mensagens -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3 style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ acc.address }}">{{ acc.address }}</h3>
+      <a href="/refresh/{{ acc.id }}" class="create-btn">↻</a>
+    </div>
+
+    <!-- label / nota -->
+    <div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+      <form method="post" action="/label/{{ acc.id }}" style="display:flex;flex-direction:column;gap:6px">
+        <input name="label" placeholder="Label (ex: Netflix)" value="{{ acc.label or '' }}"
+               style="background:#0f1117;border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:12px;width:100%"/>
+        <input name="note" placeholder="Nota" value="{{ acc.note or '' }}"
+               style="background:#0f1117;border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:12px;width:100%"/>
+        <button type="submit" class="btn btn-secondary" style="font-size:11px;padding:4px 0">Salvar</button>
+      </form>
+    </div>
+
+    <!-- acesso rápido ao endereço -->
+    <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
+      <span style="font-size:11px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ acc.address }}</span>
+      <button class="copy-btn" onclick="copyText('{{ acc.address }}')">Copiar</button>
+    </div>
+
+    <!-- lista de mensagens -->
+    {% for msg in messages %}
+    <a class="msg-item {% if msg.seen %}read{% else %}unread{% endif %} {% if selected and selected.id == msg.id %}active{% endif %}"
+       href="/message/{{ acc.id }}/{{ msg.id }}" style="text-decoration:none;color:inherit">
+      <div class="msg-dot"></div>
+      <div class="msg-info">
+        <div class="msg-from">{{ msg.from_addr or 'Desconhecido' }}</div>
+        <div class="msg-subject">{{ msg.subject or '(sem assunto)' }}</div>
+        <div class="msg-preview">{{ (msg.body or '')[:80] }}</div>
+      </div>
+      <div class="msg-date">{{ msg.received_at[:10] if msg.received_at else '' }}</div>
+    </a>
+    {% else %}
+    <div class="empty">Caixa vazia.<br><a href="/refresh/{{ acc.id }}" style="color:var(--accent)">Atualizar</a></div>
+    {% endfor %}
+  </div>
+
+  <!-- main: conteúdo da mensagem ou boas-vindas -->
+  <div class="main">
+    {% if selected %}
+    <div class="panel">
+      <div class="panel-header">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <a href="/inbox/{{ acc.id }}" class="btn btn-secondary" style="font-size:12px;padding:4px 10px">← Voltar</a>
+          <a href="/refresh/{{ acc.id }}" class="btn btn-secondary" style="font-size:12px;padding:4px 10px">↻ Atualizar</a>
+        </div>
+        <form method="post" action="/delete-message/{{ acc.id }}/{{ selected.id }}" onsubmit="return confirm('Deletar mensagem?')">
+          <button type="submit" class="btn btn-danger" style="font-size:12px;padding:4px 10px">Deletar</button>
+        </form>
+      </div>
+      <div class="msg-full">
+        <div class="mf-header">
+          <div class="mf-subject">{{ selected.subject or '(sem assunto)' }}</div>
+          <div class="mf-meta">
+            <span>De: {{ selected.from_addr }}</span>
+            <span>Para: {{ acc.address }}</span>
+            <span>{{ selected.received_at }}</span>
+          </div>
+        </div>
+        <div class="mf-body">{{ (full_msg.text if full_msg else selected.body) or '(sem conteúdo)' }}</div>
+        {% if full_msg and full_msg.html %}
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--muted)">Ver HTML</summary>
+          <iframe srcdoc="{{ full_msg.html | e }}" style="width:100%;height:400px;border:1px solid var(--border);border-radius:6px;margin-top:8px;background:#fff"></iframe>
+        </details>
+        {% endif %}
+      </div>
+    </div>
+
+    {% else %}
+    <!-- painel de info da conta quando nenhuma msg selecionada -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="num">{{ messages|length }}</div>
+        <div class="label">Mensagens</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" style="color:var(--warn)">{{ messages|selectattr('seen','equalto',0)|list|length }}</div>
+        <div class="label">Não lidas</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>{{ acc.address }}</h2>
+        <div style="display:flex;gap:8px">
+          <a href="/refresh/{{ acc.id }}" class="btn btn-success">↻ Verificar novos</a>
+          <form method="post" action="/delete-account/{{ acc.id }}" onsubmit="return confirm('Deletar conta permanentemente?')">
+            <button type="submit" class="btn btn-danger">Deletar conta</button>
+          </form>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--muted);font-size:13px">Endereço:</span>
+            <code style="background:var(--bg);padding:3px 10px;border-radius:4px;font-size:13px">{{ acc.address }}</code>
+            <button class="copy-btn" onclick="copyText('{{ acc.address }}')">Copiar</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--muted);font-size:13px">Senha:</span>
+            <code style="background:var(--bg);padding:3px 10px;border-radius:4px;font-size:13px" id="pwd">••••••••</code>
+            <button class="copy-btn" onclick="togglePwd('{{ acc.password }}')">Mostrar</button>
+            <button class="copy-btn" onclick="copyText('{{ acc.password }}')">Copiar</button>
+          </div>
+          {% if acc.label %}
+          <div><span style="color:var(--muted);font-size:13px">Label:</span> <span style="color:var(--accent2)">{{ acc.label }}</span></div>
+          {% endif %}
+          {% if acc.note %}
+          <div><span style="color:var(--muted);font-size:13px">Nota:</span> {{ acc.note }}</div>
+          {% endif %}
+          <div><span style="color:var(--muted);font-size:13px">Criado em:</span> {{ acc.created_at[:16] if acc.created_at else '—' }}</div>
+        </div>
+
+        {% if not messages %}
+        <div class="empty" style="margin-top:24px">Nenhuma mensagem. <a href="/refresh/{{ acc.id }}">Verificar agora</a></div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function togglePwd(pwd){
+  const el=document.getElementById('pwd')
+  el.textContent = el.textContent==='••••••••' ? pwd : '••••••••'
+}
+</script>
+{% endblock %}

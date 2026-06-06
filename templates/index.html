@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="layout">
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3>Contas ({{ accounts|length }})</h3>
+      <button class="create-btn" onclick="openModal()">+ Novo</button>
+    </div>
+    {% for acc in accounts %}
+    <a class="account-item" href="/inbox/{{ acc.id }}">
+      <div class="acc-addr" title="{{ acc.address }}">{{ acc.address }}</div>
+      {% if acc.label %}<div class="acc-label">{{ acc.label }}</div>{% endif %}
+      <div class="acc-meta">
+        {% if acc.unread %}<span class="badge badge-unread">{{ acc.unread }} novo{% if acc.unread > 1 %}s{% endif %}</span>{% endif %}
+        {% if acc.total_msgs %}<span class="badge badge-total">{{ acc.total_msgs }} total</span>{% endif %}
+      </div>
+    </a>
+    {% else %}
+    <div class="empty">Nenhuma conta ainda.<br><br><button class="btn btn-primary" onclick="openModal()">Criar primeiro email</button></div>
+    {% endfor %}
+  </div>
+
+  <div class="main">
+    <div class="stats">
+      <div class="stat-card"><div class="num">{{ stats.total_accounts }}</div><div class="label">Contas</div></div>
+      <div class="stat-card"><div class="num">{{ stats.total_messages }}</div><div class="label">Emails recebidos</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--warn)">{{ stats.unread }}</div><div class="label">Não lidos</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--accent2)">{{ stats.today }}</div><div class="label">Hoje</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>{% if q %}Resultados para "{{ q }}"{% else %}Visão geral{% endif %}</h2>
+        <button class="btn btn-primary" onclick="openModal()">+ Criar email</button>
+      </div>
+      <div class="panel-body">
+        {% if accounts %}
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="font-size:11px;color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
+              <th style="padding:8px 12px">Endereço</th>
+              <th style="padding:8px 12px">Label</th>
+              <th style="padding:8px 12px;text-align:center">Não lidos</th>
+              <th style="padding:8px 12px;text-align:center">Total</th>
+              <th style="padding:8px 12px">Criado em</th>
+              <th style="padding:8px 12px"></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for acc in accounts %}
+          <tr style="border-bottom:1px solid var(--border)" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+            <td style="padding:10px 12px">
+              <a href="/inbox/{{ acc.id }}" style="font-weight:500">{{ acc.address }}</a>
+              <button class="copy-btn" onclick="copyText('{{ acc.address }}')">Copiar</button>
+            </td>
+            <td style="padding:10px 12px;color:var(--accent2);font-size:12px">{{ acc.label or '—' }}</td>
+            <td style="padding:10px 12px;text-align:center">
+              {% if acc.unread %}<span class="badge badge-unread">{{ acc.unread }}</span>{% else %}—{% endif %}
+            </td>
+            <td style="padding:10px 12px;text-align:center;color:var(--muted)">{{ acc.total_msgs or 0 }}</td>
+            <td style="padding:10px 12px;color:var(--muted);font-size:12px">{{ acc.created_at[:16] if acc.created_at else '—' }}</td>
+            <td style="padding:10px 12px">
+              <a href="/inbox/{{ acc.id }}" class="btn btn-secondary" style="font-size:12px;padding:4px 10px">Abrir</a>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty">Nenhuma conta encontrada{% if q %} para "{{ q }}"{% endif %}.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
